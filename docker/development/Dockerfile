@@ -1,50 +1,24 @@
-FROM nginx:alpine
+FROM php:8.4-apache
+
+RUN a2enmod rewrite
+
+# Install PHP Extension Postgresql
+RUN apt-get update && apt-get install -y libpq-dev \
+&& docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql \
+&& docker-php-ext-install pdo pdo_pgsql pgsql
+
+# Configure PHP to log errors to stderr
+RUN { \
+    echo "log_errors = On"; \
+    echo "display_errors = Off"; \
+    echo "error_log = /proc/self/fd/2"; \
+} > /usr/local/etc/php/conf.d/docker-logging.ini
 
 WORKDIR /var/www/html
-
-RUN apk add --no-cache \
-    php84 \
-    php84-fpm \
-    php84-mysqli \
-    php84-pdo \
-    php84-pdo_mysql \
-    php84-pgsql \
-    php84-pdo_pgsql \
-    php84-intl \
-    php84-zip \
-    php84-opcache \
-    php84-session \
-    php84-json \
-    php84-ctype \
-    php84-tokenizer \
-    php84-xml \
-    php84-curl \
-    php84-mbstring \
-    php84-phar \
-    php84-openssl \
-    php84-iconv \
-    php84-xml \
-    php84-dom \
-    php84-xmlwriter \
-    php84-simplexml \
-    php84-fileinfo \
-    supervisor \
-    curl \
-    bash \
-    shadow
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-RUN adduser -D -g '' php \
-    && mkdir -p /var/www/html \
-    && chown -R php:php /var/www/html
+COPY ./docker/development/apache/default.conf /etc/apache2/sites-available/000-default.conf
 
-# Copy Nginx config and Supervisor config
-COPY ./docker/development/nginx/default.conf /etc/nginx/conf.d/default.conf
-COPY ./docker/development/nginx/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY ./docker/development/nginx/php-fpm.conf /etc/php84/php-fpm.d/www.conf
-
-RUN mkdir -p /var/log && touch /var/log/php-fpm.log && chown -R php:php /var/log
-
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+EXPOSE 80

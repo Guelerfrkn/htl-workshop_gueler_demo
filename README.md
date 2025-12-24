@@ -14,6 +14,10 @@ ALANCAPTCHA_API_KEY=...
 ### Install dependencies and run app
 
 ```bash
+mkdir -p public/uploads/catPictures
+chmod -R 775 public/uploads
+sudo chown -R $USER:www-data public/uploads
+
 docker compose -f compose.development.yaml up
 docker exec -it htl_workshop_dev_web bash
 composer install

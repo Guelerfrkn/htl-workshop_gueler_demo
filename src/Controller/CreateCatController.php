@@ -3,6 +3,7 @@ namespace App\Controller;
 
 use App\Entity\Cat;
 use App\Form\CatFormType;
+use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Attribute\Template;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
@@ -27,6 +28,7 @@ class CreateCatController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         SluggerInterface $slugger,
+        LoggerInterface $logger
     ): Response
     {
         $cat = new Cat();
@@ -65,6 +67,7 @@ class CreateCatController extends AbstractController
                     }
                     $pictureFile->move($this->catPicturesDirectory, $newFilename);
                 } catch (FileException $e) {
+                    $logger->error($e->getMessage());
                     $this->addFlash('danger', 'Picture upload failed. Please try again.');
                 }
 
